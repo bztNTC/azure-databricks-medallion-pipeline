@@ -1,0 +1,213 @@
+{
+    "name": "PL_Processamento_Consumo_Diario",
+    "properties": {
+        "activities": [
+            {
+                "name": "00_Gerador",
+                "type": "DatabricksNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Users/brunozcm23@hotmail.com/00_Gerador",
+                    "baseParameters": {
+                        "adf_run_id": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_Databricks_Portfolio",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "01_Ingestao_Bronze",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "00_Gerador",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Users/brunozcm23@hotmail.com/01_Ingestao_Bronze",
+                    "baseParameters": {
+                        "adf_run_id": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_Databricks_Portfolio",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "02_Limpeza_Silver",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "01_Ingestao_Bronze",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Users/brunozcm23@hotmail.com/02_Limpeza_Silver",
+                    "baseParameters": {
+                        "adf_run_id": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_Databricks_Portfolio",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "03_Agregacao_Gold",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "02_Limpeza_Silver",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Users/brunozcm23@hotmail.com/03_Agregador_Gold",
+                    "baseParameters": {
+                        "adf_run_id": {
+                            "value": "@pipeline().RunId",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_Databricks_Portfolio",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "Alerta_Sucesso",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "03_Agregacao_Gold",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "url": "https://prod-02.northcentralus.logic.azure.com:443/workflows/acf050db2a52400993f0c546f8ae828e/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=9KWni1B_CcPM-uhU8X16Bz2uAyhRLJqyV01myx10-Uk",
+                    "body": {
+                        "status": "SUCESSO",
+                        "pipeline": "@{pipeline().Pipeline}",
+                        "mensagem": "Pipeline finalizada com perfeição! Todos os dados da Gold estão atualizados no Unity Catalog e prontos para o Power BI.",
+                        "runId": "@{pipeline().RunId}"
+                    }
+                }
+            },
+            {
+                "name": "Alerta_Erro",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "00_Gerador",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    },
+                    {
+                        "activity": "01_Ingestao_Bronze",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    },
+                    {
+                        "activity": "02_Limpeza_Silver",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    },
+                    {
+                        "activity": "03_Agregacao_Gold",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "url": "https://prod-02.northcentralus.logic.azure.com:443/workflows/acf050db2a52400993f0c546f8ae828e/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=9KWni1B_CcPM-uhU8X16Bz2uAyhRLJqyV01myx10-Uk",
+                    "body": {
+                        "status": "FALHA",
+                        "pipeline": "@{pipeline().Pipeline}",
+                        "mensagem": "Atenção: A pipeline falhou. As tentativas de Retry foram esgotadas. Acesse o monitor do ADF e busque pelo ID abaixo para ver o log do erro.",
+                        "runId": "@{pipeline().RunId}"
+                    }
+                }
+            }
+        ],
+        "annotations": [],
+        "lastPublishTime": "2026-04-23T14:29:20Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}
