@@ -29,7 +29,33 @@ A esteira de dados foi desenhada para processar arquivos diários com alta efici
     * Modelagem dos dados para nível diário (Agregações matemáticas).
     * Execução do comando `OPTIMIZE` com `ZORDER BY` para indexação avançada, permitindo que o Power BI consuma a tabela de milhões de linhas instantaneamente.
 
-## 📊 Observabilidade e FinOps
+## 📈 Dashboards do PBI
+Aqui esta algumas imagens dos dashboards do projeto afim de facilitar a visualização dos dados gerados e processados.
+
+<details>
+  <summary><strong>📊 Clique aqui para expandir e ver as 4 páginas do Dashboard</strong></summary>
+
+  <br>
+
+  ### 1. Visão Executiva e Tempos de Execução
+  *(Breve descrição do que essa página mostra, ex: Acompanhamento de SLAs e gargalos)*
+  ![Página 1](imagens/pag1_overview.png)
+
+  ### 2. Volumetria e Carga Incremental
+  *(Ex: Crescimento diário da camada Gold vs deltas da Silver)*
+  ![Página 2](imagens/pag2_QA.png)
+
+  ### 3. Análise de Exceções de Negócio
+  *(Ex: Monitoramento de PDVs fechados ou com fraude visual)*
+  ![Página 3](imagens/pag3_meta.png)
+
+  ### 4. Qualidade de Dados (Data Quality)
+  *(Ex: Quarentena de registros com erros de preenchimento)*
+  ![Página 4](imagens/pag4_logs.png)
+
+</details>
+
+## 📊 Observabilidade
 Para garantir a saúde da pipeline em produção, foi desenvolvida uma tabela de log (`log_execucao_pipeline`) que registra:
 * Tempo exato de execução de cada notebook.
 * Volumetria de dados processada por etapa.
